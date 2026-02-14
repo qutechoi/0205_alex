@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>생일 룰렛</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", sans-serif; background:#f7f7fb; color:#222; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; }
+    .wrap { text-align:center; padding:24px; }
+    h1 { margin:0 0 12px; }
+    .roulette { width:360px; height:360px; border-radius:50%; border:10px solid #222; position:relative; margin:20px auto; box-shadow:0 8px 20px rgba(0,0,0,0.15); overflow:hidden; }
+    .slice { position:absolute; width:50%; height:50%; transform-origin:100% 100%; display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.5); }
+    .slice span { transform: rotate(18deg); }
+    .pointer { width:0; height:0; border-left:14px solid transparent; border-right:14px solid transparent; border-bottom:28px solid #e53935; margin:0 auto; }
+    button { background:#222; color:#fff; border:none; padding:12px 20px; border-radius:8px; font-size:16px; cursor:pointer; }
+    button:disabled { opacity:0.5; cursor:not-allowed; }
+    .result { margin-top:16px; font-size:20px; font-weight:700; }
+    .sub { color:#666; font-size:14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>오늘의 생일 룰렛 🎉</h1>
+    <div class="pointer"></div>
+    <div id="roulette" class="roulette"></div>
+    <button id="spinBtn">룰렛 돌리기</button>
+    <div class="result" id="result"></div>
+    <div class="sub" id="today"></div>
+  </div>
+
+  <script>
+    const friends = [
+      { name: "최규태", date: "01-17" },
+      { name: "윤원재", date: "02-14" },
+      { name: "서형갑", date: "02-27" },
+      { name: "이윤식", date: "06-24" },
+      { name: "이상필", date: "07-03" },
+      { name: "장재혁", date: "08-30" },
+      { name: "김성배", date: "10-07" },
+      { name: "강철호", date: "12-09" },
+      { name: "꽝", date: null },
+      { name: "꽝", date: null }
+    ];
+
+    const roulette = document.getElementById('roulette');
+    const spinBtn = document.getElementById('spinBtn');
+    const result = document.getElementById('result');
+    const todayEl = document.getElementById('today');
+
+    const colors = ["#ff6b6b", "#feca57", "#48dbfb", "#1dd1a1", "#5f27cd", "#ff9ff3", "#54a0ff", "#10ac84", "#576574", "#00d2d3"]; 
+
+    // build slices
+    const sliceDeg = 360 / friends.length;
+    friends.forEach((f, i) => {
+      const slice = document.createElement('div');
+      slice.className = 'slice';
+      slice.style.background = colors[i % colors.length];
+      slice.style.transform = `rotate(${i * sliceDeg}deg) skewY(${90 - sliceDeg}deg)`;
+      const label = document.createElement('span');
+      label.textContent = f.name;
+      label.style.transform = `skewY(-${90 - sliceDeg}deg) rotate(${sliceDeg/2}deg)`;
+      slice.appendChild(label);
+      roulette.appendChild(slice);
+    });
+
+    // determine today's birthday
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const todayKey = `${mm}-${dd}`;
+    todayEl.textContent = `오늘 날짜: ${mm}월 ${dd}일`;
+
+    const birthdayFriend = friends.find(f => f.date === todayKey);
+    const targetName = birthdayFriend ? birthdayFriend.name : "꽝";
+
+    function spin() {
+      spinBtn.disabled = true;
+      result.textContent = '';
+
+      // pick index of target (if multiple 꽝, pick one)
+      const candidates = friends
+        .map((f, i) => ({ f, i }))
+        .filter(x => x.f.name === targetName)
+        .map(x => x.i);
+      const targetIndex = candidates[Math.floor(Math.random() * candidates.length)];
+
+      // Compute final rotation to land on targetIndex at the pointer (top)
+      const fullSpins = 5 + Math.floor(Math.random() * 3); // 5~7 spins
+      const offset = sliceDeg * targetIndex + sliceDeg / 2; // center of slice
+      const finalDeg = fullSpins * 360 + (360 - offset);
+
+      roulette.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+      roulette.style.transform = `rotate(${finalDeg}deg)`;
+
+      setTimeout(() => {
+        if (targetName === "꽝") {
+          result.textContent = "오늘 생일인 사람이 없어요. 꽝!";
+        } else {
+          result.textContent = `${targetName} 생일 축하합니다! 🎂`;
+        }
+        spinBtn.disabled = false;
+      }, 4200);
+    }
+
+    spinBtn.addEventListener('click', spin);
+  </script>
+</body>
+</html>
